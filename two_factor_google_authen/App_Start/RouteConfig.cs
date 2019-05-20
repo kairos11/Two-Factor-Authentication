@@ -17,6 +17,8 @@ namespace two_factor_google_authen
                 name: "Default",
                 url: "{controller}/{action}/{id}",
                 defaults: new { controller = "Home", action = "Login", id = UrlParameter.Optional }
+                //name: "api",
+                //url: "{controller}/{action}/{id}"
             );
         }
     }
