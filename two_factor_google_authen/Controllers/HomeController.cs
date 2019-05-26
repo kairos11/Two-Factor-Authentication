@@ -8,6 +8,9 @@ using System.Web.Mvc;
 //using two_factor_google_authen.DataProvider;
 using two_factor_google_authen.ViewModel;
 using two_factor_google_authen.UserDataBusiness;
+using System.Data.SqlClient; //this namespace is for sqlclient server  
+using System.Configuration; // this namespace is add I am adding connection name in web config file config connection name 
+using System.Data;
 
 namespace two_factor_google_authen.Controllers
 {
@@ -15,6 +18,7 @@ namespace two_factor_google_authen.Controllers
     {
 
         private const string key = "qaz123!@@)(*"; // any 10-12 char string for use as private key in google authenticator
+        private string connectionString = ConfigurationManager.ConnectionStrings["local"].ConnectionString;
 
         public ActionResult Login()
         {
@@ -27,12 +31,12 @@ namespace two_factor_google_authen.Controllers
         {
             try
             {
-                var bll = new UserDataBusiness();
+                //var bll = new UserDataBusiness();
                 string message = "";
                 bool status = false;
                 bool isValid = false;
 
-                isValid = userDataProvider.ValidateUser(login);
+                isValid = validateUser(login);
 
                 //check username and password form our database here
                 //for demo I am going to use Admin as Username and Password1 as Password static value
@@ -91,5 +95,46 @@ namespace two_factor_google_authen.Controllers
             return RedirectToAction("Login", "Home");
         }
 
+        protected Boolean validateUser(LoginModel login)
+        {
+            try
+            {
+                SqlConnection conn = new SqlConnection(connectionString);
+                bool result = false;
+
+                SqlCommand cmd = new SqlCommand();
+                cmd = new SqlCommand("spValidateUser", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                //cmd.Parameters param1 = new SqlParameter();
+                //SqlParameter param2 = new SqlParameter();
+
+                cmd.Parameters.Add("@UserName", SqlDbType.NVarChar).Value = login.Username;
+                cmd.Parameters.Add("@Password", SqlDbType.NVarChar).Value = login.Password;
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+
+                result = Convert.ToBoolean(cmd.ExecuteScalar());
+
+                //int temp = Convert.ToInt32(cmd.ExecuteScalar().ToString());
+                //if (temp == 1)
+                //{
+                //    result = true;
+                //}
+                //else
+                //{
+                //    result = false;
+                //}
+
+                conn.Close();
+                return result;
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+        }
     }
 }
